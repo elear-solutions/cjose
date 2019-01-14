@@ -4,14 +4,9 @@ set -x
 
 pwd
 
+git submodule init
+git submodule update	
 cd jansson
-
-if [ $? -ne 0 ]; then
-	git submodule add --force https://github.com/akheron/jansson.git
-	git submodule init
-	git submodule update	
-	cd jansson	
-fi
 
 autoreconf -fsi
 

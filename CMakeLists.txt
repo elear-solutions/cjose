@@ -28,6 +28,16 @@ cmake_minimum_required(VERSION 2.6)
 # Define the project name
 project(cjose)
 
+if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+  include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+  conan_basic_setup()
+else()
+  execute_process (COMMAND bash -c "./build.sh"
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  )
+  set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -I ../jansson/include")
+endif()
+
 # Define link_directory to be relative path
 cmake_policy(SET CMP0015 NEW)
 #link_directories(../../elear-common-lib)
@@ -37,13 +47,13 @@ cmake_policy(SET CMP0015 NEW)
 #add_subdirectory(utest/test_util)
 #add_subdirectory(utest/test_genericstatemachine_devtimer)
 
-execute_process (COMMAND bash -c "./build.sh"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+#execute_process (COMMAND bash -c "./build.sh"
+#    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+#)
 
 # Set global compilation flags at project level
 set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -I ../include")
-set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -I ../jansson/include")
+#set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -I ../jansson/include")
 set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS} -pedantic-errors -Wall -std=c11 -D_GNU_SOURCE -O2 -fPIC -Wl,--version-script=../exportmap")
 
 # The following file GLOB command will search for all files within the current
@@ -62,13 +72,17 @@ file(GLOB OBJS ${CMAKE_SOURCE_DIR}/build/obj/*.o)
 
 # Set Libraries to be built
 add_library(cjose SHARED ${CJOSE_SRCS} ${OBJS})
+add_library(cjose_static  ${CJOSE_SRCS} ${OBJS})
 # Set compilation flags
 # -fPIC is implicit in SHARED libraries, see POSITION_INDEPENDANT_CODE property in cmake documentation
 #set_target_properties(elearcommon PROPERTIES COMPILE_FLAGS "-fPIC")
+if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+  target_link_libraries(cjose ${CONAN_LIBS})
+else()
+  target_link_libraries(cjose libssl.a)
+  target_link_libraries(cjose libcrypto.a)
+endif()
 target_link_libraries(cjose m)
-target_link_libraries(cjose ssl)
-target_link_libraries(cjose crypto)
-
 # Install library files
 install (TARGETS cjose DESTINATION lib)
 # Install headers
